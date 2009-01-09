@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -farrows #-}
+{-# LANGUAGE Arrows #-}
 
 import Test.QuickCheck
 import Data.Complex

@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fglasgow-exts -farrows #-}
+{-# LANGUAGE Arrows #-}
 
 import Control.Arrow
 import Control.Arrow.Quantum

@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, RankNTypes #-}
+{-# LANGUAGE RankNTypes, Arrows #-}
 
 module Control.Arrow.Quantum
     ( Quantum
@@ -20,6 +20,7 @@ import Data.Complex
 import System.Random
 import Control.Monad.State
 import Control.Monad.Random
+import Control.Monad ((>=>))
 
 -- |Representation of a probability amplitude
 type Amp = Complex Double
@@ -62,8 +63,7 @@ newtype Operator m b c
 
 instance (Monad m) => Category (Operator m) where
 	id = Op (return . mapStateVec id)
-	(Op g) . (Op f) =
-		Op (\sts -> f sts >>= g)
+	(Op g) . (Op f) = Op (f >=> g)
 	
 instance (Monad m) => Arrow (Operator m) where
     arr f             = 
@@ -186,7 +186,7 @@ newtype Quantum m b c
 
 instance (Monad m) => Category (Quantum m) where
 	id           = Q (left (arr id))
-	(Q g) . (Q f) = Q (f >>> g)
+	(Q g) . (Q f) = Q (g . f)
 
 instance (Monad m) => Arrow (Quantum m) where
     arr f           = Q (left (arr f))
