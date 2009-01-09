@@ -13,7 +13,7 @@ Description:
 
     See the included example.hs for some simple examples of what 
     using this module looks like.
-Version: 0.0.4
+Version: 0.0.5
 Stability: experimental
 Synopsis: An embedding of quantum computation as a Haskell arrow
 License: LGPL
