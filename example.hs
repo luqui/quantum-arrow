@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows #-}
 
 import Control.Arrow
-import Control.Arrow.Quantum
+import QuantumArrow.Quantum
 import Data.Complex
 
 

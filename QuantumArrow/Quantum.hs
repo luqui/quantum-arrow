@@ -1,6 +1,6 @@
 {-# LANGUAGE RankNTypes, Arrows #-}
 
-module Control.Arrow.Quantum
+module QuantumArrow.Quantum
     ( Quantum
     , Amp
     , entangle

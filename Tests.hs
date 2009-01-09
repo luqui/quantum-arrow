@@ -3,7 +3,7 @@
 import Test.QuickCheck
 import Data.Complex
 import Control.Arrow
-import Control.Arrow.Quantum
+import QuantumArrow.Quantum
 import Control.Monad
 import Control.Monad.Random
 import Text.Printf
