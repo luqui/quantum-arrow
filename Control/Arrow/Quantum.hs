@@ -13,6 +13,8 @@ module Control.Arrow.Quantum
     )
 where
 
+import Control.Category
+import Prelude hiding ((.), id)
 import Control.Arrow
 import Data.Complex
 import System.Random
@@ -58,11 +60,14 @@ instance Functor QState where
 newtype Operator m b c 
     = Op (forall d. QStateVec (b,d) -> m (QStateVec (c,d)))
 
+instance (Monad m) => Category (Operator m) where
+	id = Op (return . mapStateVec id)
+	(Op g) . (Op f) =
+		Op (\sts -> f sts >>= g)
+	
 instance (Monad m) => Arrow (Operator m) where
     arr f             = 
         Op (return . mapStateVec f)
-    (Op f) >>> (Op g) = 
-        Op (\sts -> f sts >>= g)
     first (Op f)      = 
         Op (liftM (map (fmap shuffleLeftPair)) -- move it back
           . f 
@@ -179,9 +184,12 @@ newtype Quantum m b c
 --       (thus "aborting" the current branch).
     = Q (forall d. Operator m (Either b d) (Either c d))
 
+instance (Monad m) => Category (Quantum m) where
+	id           = Q (left (arr id))
+	(Q g) . (Q f) = Q (f >>> g)
+
 instance (Monad m) => Arrow (Quantum m) where
     arr f           = Q (left (arr f))
-    (Q f) >>> (Q g) = Q (f >>> g)
     first (Q f)     = Q (eitherToTuple ^>> first f >>^ tupleToEither)
 
 instance (Monad m) => ArrowChoice (Quantum m) where

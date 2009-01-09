@@ -20,6 +20,7 @@ License: LGPL
 License-file: LICENSE
 Category: Control
 Author: Luke Palmer
+Homepage: http://github.com/luqui/quantum-arrow
 Maintainer: lrpalmer@gmail.com
 Build-Type: Simple
 Build-Depends: base, mtl, random, MonadRandom, QuickCheck < 2.0
