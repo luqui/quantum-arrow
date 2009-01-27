@@ -86,29 +86,29 @@ instance (Monad m) => ArrowChoice (Operator m) where
         return $ mapStateVec Left lefts'
               ++ mapStateVec Right rights
 
--- |opObserveWith f takes an equivalence relation f, splits the state 
+-- |opObserveWith f takes a partition function f, splits the state 
 -- space into equivalence classes based on f, and then randomly chooses
 -- one based on the probablity sum of each class.  The output is
 -- the chosen class.
-opObserveWith :: (MonadRandom m) => (a -> a -> Bool) -> Operator m a a
+opObserveWith :: (MonadRandom m, Eq r) => (a -> r) -> Operator m a a
 opObserveWith eq = Op $ \sts -> do
     let cls = classify eq sts
     if null cls
         then return []
-        else liftM snd $ pick (classify eq sts)
+        else liftM snd $ pick cls
 
 -- |classify is a helper function for opObserveWith which splits the input into
 -- equivalence classes, finding the sum of the amplitudes of the states in each
 -- class (for selection purposes).  It returns a state vector of (a, QStateVec
 -- (a,b)):  the first element of the tuple is an arbitrary representitave of the
 -- class; the second element is the class itself (represented as a state vector).
-classify :: (a -> a -> Bool) -> QStateVec (a,b) -> QStateVec (a, QStateVec (a,b))
+classify :: (Eq r) => (a -> r) -> QStateVec (a,b) -> QStateVec (a, QStateVec (a,b))
 classify eq xs = execState (classify' xs) []
     where
     classify' [] = return ()
-    classify' (QState (a,b) p:sts) = do
+    classify' (QState (a,b) p : sts) = do
         accum <- get
-        case break (\(QState (a',_) _) -> eq a a') accum of
+        case break (\(QState (a',_) _) -> eq a == eq a') accum of
             (pre, []) -> do
                 put $ QState (a, [QState (a,b) p]) p : pre
             (pre, QState (_,bs) p' : posts) ->
@@ -142,7 +142,7 @@ opEntangle = Op $ \sts ->
 -- a quantum arrow.  The arrow observes the input to the action, collapsing 
 -- the state, before performing the action.
 opLift :: (Eq a, MonadRandom m) => (a -> m b) -> Operator m a b
-opLift f = opObserveWith (==) >>> Op (\sts -> do
+opLift f = opObserveWith id >>> Op (\sts -> do
     case sts of
         (s:_) -> do
             result <- f $ fst $ qsValue s
@@ -208,7 +208,7 @@ instance (Monad m) => ArrowChoice (Quantum m) where
 -- distinction was written, to be able to collapse conditionals
 -- "after they happen" rather than "as they happen".
 observeBranch :: (MonadRandom m) => Quantum m a a
-observeBranch = Q (opObserveWith sameSide)
+observeBranch = Q (opObserveWith eitherTag)
 
 -- |entangle takes as input a list of values and probability 
 -- amplitudes and gives as output a superposition of the inputs.
@@ -236,21 +236,21 @@ qLift f = observeBranch >>> Q (left (opLift f))
 qLift_ :: (MonadRandom m) => m b -> Quantum m () b
 qLift_ = qLift . const
 
--- |@observeWith f@ takes an equivalence relation f, breaks the state
+-- |@observeWith f@ takes a partition function f, breaks the state
 -- space into eigenstates of that relation, and collapses to one.  
 -- For example:
 --
 -- > x <- entangle -< map (\s -> (s,1 :+ 0)) [1..20]
--- > observeWith (\x y -> x `mod` 2 == y `mod` 2)
+-- > observeWith (`mod` 2)
 --
 -- Will collapse @x@ to be either even or odd, but make no finer
 -- decisions than that.
-observeWith :: (MonadRandom m) => (a -> a -> Bool) -> Quantum m a a
+observeWith :: (MonadRandom m, Eq r) => (a -> r) -> Quantum m a a
 observeWith f = Q (left (opObserveWith f))
 
 -- |observe is just observeWith on equality.
 observe :: (Eq a, MonadRandom m) => Quantum m a a
-observe = observeWith (==)
+observe = observeWith id
 
 -- |runQuantum takes an input state vector, runs it through the given
 -- Quantum arrow, and returns a state vector of outputs.
@@ -261,16 +261,15 @@ runQuantum (Q q) = runOperator (Left ^>> q >>^ either id undefined)
 -- output to an eigenstate, and returns it.
 execQuantum :: (Eq b, MonadRandom m) => Quantum m a b -> a -> m b
 execQuantum q a = 
-    liftM (fst . head) $ runQuantum (q >>> observeWith (==)) [(a, 1 :+ 0)]
+    liftM (fst . head) $ runQuantum (q >>> observe) [(a, 1 :+ 0)]
 
 
 mapStateVec :: (a -> b) -> QStateVec (a,d) -> QStateVec (b,d)
 mapStateVec = map . fmap . first
 
-sameSide :: Either a b -> Either c d -> Bool
-sameSide (Left _)  (Left _)  = True
-sameSide (Right _) (Right _) = True
-sameSide _          _        = False
+eitherTag :: Either a b -> Bool
+eitherTag (Left _) = False
+eitherTag (Right _) = True
 
 shuffleRightPair :: ((a,b),c) -> (a,(b,c))
 shuffleRightPair ((a,b),c) = (a,(b,c))
