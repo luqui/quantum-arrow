@@ -1,3 +1,4 @@
+cabal-version:       >=1.10
 Name: quantum-arrow
 Description:
     This module is a loose port of the Quantum::Entanglement
@@ -13,7 +14,7 @@ Description:
 
     See the included example.hs for some simple examples of what 
     using this module looks like.
-Version: 0.0.5
+Version: 0.0.6
 Stability: experimental
 Synopsis: An embedding of quantum computation as a Haskell arrow
 License: LGPL
@@ -23,6 +24,7 @@ Author: Luke Palmer
 Homepage: http://github.com/luqui/quantum-arrow
 Maintainer: lrpalmer@gmail.com
 Build-Type: Simple
-Build-Depends: base, mtl, random, MonadRandom, QuickCheck < 2.0
-Exposed-Modules: QuantumArrow.Quantum
 Extra-Source-Files: example.hs, Tests.hs
+library
+    Build-Depends: base, mtl, random, MonadRandom, QuickCheck
+    Exposed-Modules: QuantumArrow.Quantum

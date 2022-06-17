@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, Arrows #-}
+{-# LANGUAGE Arrows, FlexibleContexts, RankNTypes #-}
 
 module QuantumArrow.Quantum
     ( Quantum
